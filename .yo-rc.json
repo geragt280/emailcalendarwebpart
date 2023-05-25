@@ -1,0 +1,21 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "14.17.5",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.9.1"
+    },
+    "version": "1.17.2",
+    "libraryName": "med-mutual-calendar-webpart",
+    "libraryId": "d8399f25-6321-45a3-9212-dbe010ea7316",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "med-mutual-calendar-webpart",
+    "solutionShortDescription": "med-mutual-calendar-webpart description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

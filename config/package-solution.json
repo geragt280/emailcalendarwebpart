@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "med-mutual-calendar-webpart-client-side-solution",
+    "id": "d8399f25-6321-45a3-9212-dbe010ea7316",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.17.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "med-mutual-calendar-webpart description"
+      },
+      "longDescription": {
+        "default": "med-mutual-calendar-webpart description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "med-mutual-calendar-webpart Feature",
+        "description": "The feature that activates elements of the med-mutual-calendar-webpart solution.",
+        "id": "5c122abf-7d85-4eab-9995-8ae6cb5d18f2",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/med-mutual-calendar-webpart.sppkg"
+  }
+}

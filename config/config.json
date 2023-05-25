@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "med-mutual-calendar-webpart-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/medMutualCalendarWebpart/MedMutualCalendarWebpartWebPart.js",
+          "manifest": "./src/webparts/medMutualCalendarWebpart/MedMutualCalendarWebpartWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "MedMutualCalendarWebpartWebPartStrings": "lib/webparts/medMutualCalendarWebpart/loc/{locale}.js"
+  }
+}

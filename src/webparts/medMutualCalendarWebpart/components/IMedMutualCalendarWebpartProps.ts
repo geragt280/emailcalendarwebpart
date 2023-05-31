@@ -1,7 +1,7 @@
+import { WebPartContext } from "@microsoft/sp-webpart-base";
+
 export interface IMedMutualCalendarWebpartProps {
   description: string;
-  isDarkTheme: boolean;
-  environmentMessage: string;
-  hasTeamsContext: boolean;
-  userDisplayName: string;
+  listUrl: string;
+  context: WebPartContext;
 }

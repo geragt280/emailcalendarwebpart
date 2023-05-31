@@ -14,22 +14,18 @@ import { IMedMutualCalendarWebpartProps } from './components/IMedMutualCalendarW
 
 export interface IMedMutualCalendarWebpartWebPartProps {
   description: string;
+  listUrl: string;
 }
 
 export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPart<IMedMutualCalendarWebpartWebPartProps> {
-
-  private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
 
   public render(): void {
     const element: React.ReactElement<IMedMutualCalendarWebpartProps> = React.createElement(
       MedMutualCalendarWebpart,
       {
         description: this.properties.description,
-        isDarkTheme: this._isDarkTheme,
-        environmentMessage: this._environmentMessage,
-        hasTeamsContext: !!this.context.sdks.microsoftTeams,
-        userDisplayName: this.context.pageContext.user.displayName
+        listUrl: this.properties.listUrl,
+        context: this.context
       }
     );
 
@@ -38,7 +34,7 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
 
   protected onInit(): Promise<void> {
     return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
+      // this._environmentMessage = message;
     });
   }
 
@@ -52,12 +48,6 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
           switch (context.app.host.name) {
             case 'Office': // running in Office
               environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
-              break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
-              break;
-            case 'Teams': // running in Teams
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
               break;
             default:
               throw new Error('Unknown host');
@@ -75,16 +65,15 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
       return;
     }
 
-    this._isDarkTheme = !!currentTheme.isInverted;
-    const {
-      semanticColors
-    } = currentTheme;
+    // const {
+    //   semanticColors
+    // } = currentTheme;
 
-    if (semanticColors) {
-      this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-      this.domElement.style.setProperty('--link', semanticColors.link || null);
-      this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    }
+    // if (semanticColors) {
+    //   this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
+    //   this.domElement.style.setProperty('--link', semanticColors.link || null);
+    //   this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
+    // }
 
   }
 
@@ -109,6 +98,9 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
               groupFields: [
                 PropertyPaneTextField('description', {
                   label: strings.DescriptionFieldLabel
+                }),
+                PropertyPaneTextField('listUrl', {
+                  label: 'List URL'
                 })
               ]
             }

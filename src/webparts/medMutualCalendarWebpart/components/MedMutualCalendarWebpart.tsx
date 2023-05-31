@@ -1,43 +1,84 @@
 import * as React from 'react';
-import styles from './MedMutualCalendarWebpart.module.scss';
+// import { Calendar, momentLocalizer } from 'react-big-calendar';
+// import * as moment from 'moment';
+
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { IMedMutualCalendarWebpartProps } from './IMedMutualCalendarWebpartProps';
-import { escape } from '@microsoft/sp-lodash-subset';
+import CalendarComp from './Calender/CalendarComp';
+
+// interface IMedMutualCalendarWebpartState {
+//   items: any[] | undefined;
+// }
+
+// const localizer = momentLocalizer(moment);
 
 export default class MedMutualCalendarWebpart extends React.Component<IMedMutualCalendarWebpartProps, {}> {
+  // constructor(props : IMedMutualCalendarWebpartProps){
+  //   super(props);
+  //   this.state = {
+  //     items : []
+  //   }
+  // }
+
+  // public componentDidMount(): void {
+  //   void this._getListData();
+  // }
+
+  // _getEstDate = (date :string, allDay: boolean) : string => {
+  //   return allDay ? date.substr(0, date.length - 1) : date;
+  // }
+
+  // _getListData = () : Promise<any> => {
+  //   const {context, listUrl} = this.props;
+
+  //   const url = listUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
+
+  //   if (!url) {
+  //     return Promise.resolve([]);
+  //   }
+
+  //   const dayStart = moment().startOf('day').add(1, 'minutes').toDate().toISOString();
+  //   const dayEnd = moment().add(1, 'y').endOf('day').toDate().toISOString();
+  //   console.log('******url', url + `/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`);
+
+  //   context.msGraphClientFactory
+  //     .getClient("3")
+  //     .then((client: any): void => {
+  //       // From https://github.com/microsoftgraph/msgraph-sdk-javascript sample
+  //       client
+  //         .api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
+  //         .get((err: any, res: { value: any[]; }) => {
+  //           console.log('****RESPONSE', res)
+  //           if (err) {
+  //             console.error('something bad happened');
+  //             console.error(err);
+  //             return;
+  //           }
+
+  //           const pickedItems = res.value.map(i => ({ id: i.id, title: i.subject, start: new Date(this._getEstDate(i.start.dateTime, i.isAllDay)), end: new Date(this._getEstDate(i.end.dateTime, i.isAllDay)), allDay: i.isAllDay }));
+  //           console.log('****RESPONSE222', pickedItems)
+  //           this.setState({items: pickedItems});
+  //           return pickedItems;
+  //         });
+
+  //     })
+  //     .catch((err: any) => {
+  //       console.log('nope', err);
+  //     });
+  // }
+
+
   public render(): React.ReactElement<IMedMutualCalendarWebpartProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      hasTeamsContext,
-      userDisplayName
-    } = this.props;
+   
 
     return (
-      <section className={`${styles.medMutualCalendarWebpart} ${hasTeamsContext ? styles.teams : ''}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? require('../assets/welcome-dark.png') : require('../assets/welcome-light.png')} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
+      <div>
+        <CalendarComp
+          context={this.props.context}
+          listUrl={this.props.listUrl}
+        />
+      </div>
     );
   }
 }

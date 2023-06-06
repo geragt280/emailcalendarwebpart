@@ -1,16 +1,64 @@
 import * as React from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import * as moment from 'moment';
-
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { WebPartContext } from '@microsoft/sp-webpart-base';
+import { useBoolean } from '@fluentui/react-hooks';
+import { MSGraphClientV3 } from '../../../../../node_modules/@microsoft/sp-http-msgraph/dist/index-internal'
+import { DialogBodyProps } from './DialogBodyProps';
+import Dialog from './Dialog';
 
 const localizer = momentLocalizer(moment);
 
 type Props = {
   context: WebPartContext;
-  listUrl: string;
+  userId: string;
+};
+
+type ColorCategoryProps = {
+  id: string;
+  displayName: string;
+  color: string;
+}
+
+type EventProps = {
+  allDay: string;
+  category: string;
+  end: Date;
+  eventUrl: string;
+  id: string;
+  start: Date;
+  title: string;
+  eventDescription: string;
+}
+
+const colorCodes: { [key: string]: string } = {
+  preset0: "#F1919A",
+  preset1: "#FFBA66",
+  preset2: "Brown",
+  preset3: "#A7A24C",
+  preset4: "#75B172",
+  preset5: "Teal",
+  preset6: "Olive",
+  preset7: "#4EA4BC",
+  preset8: "#B0A4C8",
+  preset9: "cranberry",
+  preset10: "steel",
+  preset11: "darkSteel",
+  preset12: "gray",
+  preset13: "darkgray",
+  preset14: "black",
+  preset15: "darkred",
+  preset16: "darkorange",
+  preset17: "darkbrown",
+  preset18: "darkyellow",
+  preset19: "darkgreen",
+  preset20: "darkteal",
+  preset21: "darkolive",
+  preset22: "darkblue",
+  preset23: "darkpurple",
+  preset24: "darkcranberry",
+  default: "lightblue",
 };
 
 // type CalendarItemProps = {
@@ -22,12 +70,28 @@ type Props = {
 //   category: string;
 // }
 
-const CalendarComp: React.FunctionComponent<Props> = ({ context, listUrl }) => {
+const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
   const [items, setItems] = React.useState([]);
+  const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[] | undefined>([
+    {
+      color: "default",
+      displayName: "Default",
+      id: "34e3cb90-1b09-414e-be75-7525728cf2d5"
+    }
+  ]);
+  const [selectedItem, setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
+  const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
+  const graphCalenderBaseUrl = `/users/${userId}/calendars`;
+  const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
+  // const titleId = useId('title');
 
-  const _getListData = (): Promise<any> => {
+  // const _getEstDate = (date: string, allDay: boolean): string => {
+  //   return allDay ? date.substr(0, date.length - 1) : date;
+  // }
 
-    const url = listUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
+  const _getListData = (): Promise<EventProps[] | void> => {
+
+    const url = graphCalenderBaseUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
 
     if (!url) {
       return Promise.resolve([]);
@@ -39,8 +103,7 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, listUrl }) => {
 
     context.msGraphClientFactory
       .getClient("3")
-      .then((client: any): void => {
-        // From https://github.com/microsoftgraph/msgraph-sdk-javascript sample
+      .then((client: MSGraphClientV3): void => {
         client
           .api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
           .get((err: any, res: { value: any[]; }) => {
@@ -51,13 +114,15 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, listUrl }) => {
               return;
             }
 
-            const pickedItems = res.value.map(i => ({
+            const pickedItems: EventProps[] = res.value.map(i => ({
               id: i.id,
               title: i.subject,
-              start: new Date(_getEstDate(i.start.dateTime, i.isAllDay)),
-              end: new Date(_getEstDate(i.end.dateTime, i.isAllDay)),
+              start: new Date(i.start.dateTime),
+              end: new Date(i.end.dateTime),
               allDay: i.isAllDay,
-              category: i.categories[0]
+              category: i.categories.length > 0 ? i.categories[0] : undefined,
+              eventUrl: i.webLink,
+              eventDescription: i.bodyPreview
             }));
             console.log('****RESPONSE222', pickedItems)
             setItems(pickedItems);
@@ -70,44 +135,67 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, listUrl }) => {
       });
   }
 
-
   React.useEffect(() => {
     const getListDataPromise = async (): Promise<void> => {
       await _getListData();
     };
+    const getColorCategories = (): void => {
+      context.msGraphClientFactory
+        .getClient("3")
+        .then((client: MSGraphClientV3): void => {
+          client
+            .api(`${graphColorCategoriesUrl}`)
+            .get((err: any, res: { value: ColorCategoryProps[]; }) => {
+              console.log("Color categories", res.value);
+              setColorCategories([...colorCategories, ...res.value]);
+            });
+        })
+        .catch((err: any) => {
+          console.log('error gletting color category', err);
+        });
+    }
+    void getColorCategories();
     void getListDataPromise();
     console.log("Comp started");
   }, []);
 
-  const _getEstDate = (date: string, allDay: boolean): string => {
-    return allDay ? date.substr(0, date.length - 1) : date;
+
+  const onItemSelect = (e: EventProps): void => {
+    console.log("item selected", e);
+    // const timeString = e.start.toTimeString();
+    const friendlyTime = e.start.toLocaleTimeString([],
+      // "en-PK", 
+      {
+        hour: '2-digit', minute: '2-digit'
+        // , timeZone: "America/New_York" 
+      });
+    const eventSubject = e.title;
+    const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
+    const eventDescription = e.eventDescription;
+    const eventUrl = e.eventUrl;
+    setSelectedItem({
+      eventSubject,
+      eventDate,
+      eventDescription,
+      eventUrl
+    });
+    showModal();
   }
 
-  const onItemSelect = (e: any, r: any): void => {
-    console.log("item selected", e, r);
-  }
 
   const eventStyleGetter = (event: any, start: any, end: any, isSelected: any) => {
-    console.log("rendered event", event);
-    const colorCodes: { [key: string]: string } = {
-      Red: "#F1919A",
-      Green: "#75B172",
-      Blue: "#4EA4BC",
-      Yellow: "#A7A24C",
-      Orange: "#FFBA66",
-      Lightblue: "lightblue",
-    };
-    
-    const backColor = event.category !== undefined ? event.category.split(' ')[0].toString() : "Lightblue";
-    const backgroundColor = isSelected ? 'gray' : colorCodes[backColor];
-     // Customize the background color based on isSelected and event properties
+    const category = event.category !== undefined ? event.category : "Default";
+    const currentPreset = colorCategories.filter(e => e.displayName === category)[0];
+    const backgroundColor = isSelected ? colorCodes['Default'] : colorCodes[currentPreset.color];
+    console.log("styling item", category, currentPreset);
+    // Customize the background color based on isSelected and event properties
     const style = {
       backgroundColor,
-      borderRadius: '0px',
+      borderRadius: '5px',
       color: 'white',
-      border: 'none',
+      // border: 'none',
       display: 'block',
-      height:100
+      height: 60
     };
     return {
       style,
@@ -125,8 +213,15 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, listUrl }) => {
         onSelectEvent={onItemSelect}
         style={{ height: 500 }}
       />
+
+      {isModalOpen &&
+        <Dialog hideModal={hideModal} selectedItem={selectedItem} />
+      }
+
+
     </div>
   )
 }
 
 export default CalendarComp;
+

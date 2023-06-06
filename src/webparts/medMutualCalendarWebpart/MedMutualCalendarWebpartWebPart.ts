@@ -14,7 +14,7 @@ import { IMedMutualCalendarWebpartProps } from './components/IMedMutualCalendarW
 
 export interface IMedMutualCalendarWebpartWebPartProps {
   description: string;
-  listUrl: string;
+  userId: string;
 }
 
 export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPart<IMedMutualCalendarWebpartWebPartProps> {
@@ -24,7 +24,7 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
       MedMutualCalendarWebpart,
       {
         description: this.properties.description,
-        listUrl: this.properties.listUrl,
+        userId: this.properties.userId,
         context: this.context
       }
     );
@@ -99,8 +99,8 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
                 PropertyPaneTextField('description', {
                   label: strings.DescriptionFieldLabel
                 }),
-                PropertyPaneTextField('listUrl', {
-                  label: 'List URL'
+                PropertyPaneTextField('userId', {
+                  label: 'User ID'
                 })
               ]
             }

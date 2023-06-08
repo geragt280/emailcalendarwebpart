@@ -3,4 +3,5 @@ export type DialogBodyProps = {
   eventDescription: string;
   eventUrl: string;
   eventDate: string;
+  eventCategory: string;
 }

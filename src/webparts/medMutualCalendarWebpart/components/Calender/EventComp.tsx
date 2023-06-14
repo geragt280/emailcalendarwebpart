@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
 import * as moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { WebPartContext } from '@microsoft/sp-webpart-base';
@@ -7,8 +6,8 @@ import { useBoolean } from '@fluentui/react-hooks';
 import { MSGraphClientV3 } from '../../../../../node_modules/@microsoft/sp-http-msgraph/dist/index-internal'
 import { DialogBodyProps } from './DialogBodyProps';
 import Dialog from './Dialog';
-
-const localizer = momentLocalizer(moment);
+import { DateBox, DateBoxSize } from './DateBox';
+import { FocusZone } from 'office-ui-fabric-react';
 
 type Props = {
   context: WebPartContext;
@@ -70,9 +69,9 @@ const colorCodes: { [key: string]: string } = {
 //   category: string;
 // }
 
-const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
-  const [items, setItems] = React.useState([]);
-  const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string|undefined>(undefined);
+const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
+  const [items, setItems] = React.useState<EventProps[]>([]);
+  const [selectedEventCategoryColor/*, setSelectedEventCategoryColor*/] = React.useState<string|undefined>(undefined);
   const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[] | undefined>([
     {
       color: "default",
@@ -80,10 +79,10 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
       id: "34e3cb90-1b09-414e-be75-7525728cf2d5"
     }
   ]);
-  const [selectedItem, setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
+  const [selectedItem /*, setSelectedItem*/] = React.useState<DialogBodyProps | undefined>(undefined);
   const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
   const graphCalenderBaseUrl = `/users/${userId}/calendars`;
-  const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
+  const [isModalOpen, { /*setTrue: showModal,*/ setFalse: hideModal }] = useBoolean(false);
   // const titleId = useId('title');
 
   // const _getEstDate = (date: string, allDay: boolean): string => {
@@ -161,83 +160,58 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
     }
     void getColorCategories();
     void getListDataPromise();
-    console.log("Comp started");
+    console.log("Comp started", items);
   }, []);
 
+  const RenderEventItems: React.FunctionComponent<{ items: EventProps[] | undefined; }> = ({items}) =>{
 
-  const onItemSelect = (e: EventProps): void => {
-    // console.log("item selected", e);
-    // const timeString = e.start.toTimeString();
-    const friendlyTime = e.start.toLocaleTimeString([],
-      {
-        hour: '2-digit', minute: '2-digit'
-      }
-    );
-    const eventSubject = e.title;
-    const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
-    const eventDescription = e.eventDescription;
-    const eventUrl = e.eventUrl;
-    const eventCategory = e.category !== undefined ? e.category : "Default";
-    const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
-    const backgroundColor = colorCodes[currentPreset.color];
-    // console.log('background color', backgroundColor);
-    setSelectedEventCategoryColor(backgroundColor);
-    setSelectedItem({
-      eventSubject,
-      eventDate,
-      eventDescription,
-      eventUrl,
-      eventCategory
-    });
-    showModal();
+    return <div>
+      {items.map((item, i) => {
+        const eventCategory = item.category !== undefined ? item.category : "Default";
+        const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
+        const backgroundColor = colorCodes[currentPreset.color];
+        return <div>
+          <DateBox  startDate={item.start} endDate={item.end} size={DateBoxSize.Small} key={i} themeVariant={backgroundColor} />
+        </div>
+      })}
+    </div>
   }
 
-
-  const eventStyleGetter = (event: any, start: any, end: any, isSelected: any) => {
-    const category = event.category !== undefined ? event.category : "Default";
-    const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === category)[0] : colorCategories[0];
-    const backgroundColor = colorCodes[currentPreset.color];
-    const style = {
-      backgroundColor,
-      borderRadius: '5px',
-      color: 'white',
-      border: 'none',
-      display: 'flex'
-    };
-    return {
-      style,
-    };
-  };
-
-  // const myEventComponent: React.ComponentType<EP<EventProps>> = (props) => {
-  //   // Destructure the event prop
-  //   const { event } = props;
-  
-  //   // Your component logic goes here
-  //   return (
-  //     <div style={{ height: 20 }}>
-  //       {/* Rearrange the text here */}
-  //       {event.title}
-  //     </div>
+  // const onItemSelect = (e: EventProps): void => {
+  //   // console.log("item selected", e);
+  //   // const timeString = e.start.toTimeString();
+  //   const friendlyTime = e.start.toLocaleTimeString([],
+  //     {
+  //       hour: '2-digit', minute: '2-digit'
+  //     }
   //   );
-  // };
-
+  //   const eventSubject = e.title;
+  //   const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
+  //   const eventDescription = e.eventDescription;
+  //   const eventUrl = e.eventUrl;
+  //   const eventCategory = e.category !== undefined ? e.category : "Default";
+  //   const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
+  //   const backgroundColor = colorCodes[currentPreset.color];
+  //   // console.log('background color', backgroundColor);
+  //   setSelectedEventCategoryColor(backgroundColor);
+  //   setSelectedItem({
+  //     eventSubject,
+  //     eventDate,
+  //     eventDescription,
+  //     eventUrl,
+  //     eventCategory
+  //   });
+  //   showModal();
+  // }
+  console.log("rendering", items);
   return (
     <div>
-      <Calendar
-        localizer={localizer}
-        events={items || []}
-        startAccessor="start"
-        endAccessor="end"
-        eventPropGetter={eventStyleGetter}
-        // components={{
-        //   week: { 
-        //     event: myEventComponent
-        //   }
-        // }}
-        onSelectEvent={onItemSelect}
-        style={{ height: 500 }}
-      />
+      
+      <div>
+        <FocusZone>
+          <RenderEventItems items={items} />
+        </FocusZone>
+      </div>
 
       {isModalOpen &&
         <Dialog hideModal={hideModal} selectedItem={selectedItem} categoryColor={selectedEventCategoryColor} />
@@ -246,5 +220,5 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
     </div>
   )
 }
-export default CalendarComp;
+export default EventComp;
 

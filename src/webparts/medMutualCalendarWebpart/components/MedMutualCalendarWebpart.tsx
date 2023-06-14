@@ -4,6 +4,7 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { IMedMutualCalendarWebpartProps } from './IMedMutualCalendarWebpartProps';
 import CalendarComp from './Calender/CalendarComp';
+import EventComp from './Calender/EventComp';
 
 export default class MedMutualCalendarWebpart extends React.Component<IMedMutualCalendarWebpartProps, {}> {
   
@@ -12,10 +13,15 @@ export default class MedMutualCalendarWebpart extends React.Component<IMedMutual
 
     return (
       <div>
-        <CalendarComp
-          context={this.props.context}
-          userId={this.props.userId}
-        />
+        {!this.props.componentToggler ? 
+          <CalendarComp
+            context={this.props.context}
+            userId={this.props.userId}
+          /> : <EventComp 
+            context={this.props.context}
+            userId={this.props.userId}
+          />       
+        }
       </div>
     );
   }

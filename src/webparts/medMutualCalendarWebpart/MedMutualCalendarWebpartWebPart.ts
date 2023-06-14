@@ -3,7 +3,8 @@ import * as ReactDom from 'react-dom';
 import { Version } from '@microsoft/sp-core-library';
 import {
   IPropertyPaneConfiguration,
-  PropertyPaneTextField
+  PropertyPaneTextField,
+  PropertyPaneToggle
 } from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
@@ -15,6 +16,7 @@ import { IMedMutualCalendarWebpartProps } from './components/IMedMutualCalendarW
 export interface IMedMutualCalendarWebpartWebPartProps {
   description: string;
   userId: string;
+  componentToggler: boolean;
 }
 
 export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPart<IMedMutualCalendarWebpartWebPartProps> {
@@ -25,7 +27,8 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
       {
         description: this.properties.description,
         userId: this.properties.userId,
-        context: this.context
+        context: this.context,
+        componentToggler: this.properties.componentToggler
       }
     );
 
@@ -37,8 +40,6 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
       // this._environmentMessage = message;
     });
   }
-
-
 
   private _getEnvironmentMessage(): Promise<string> {
     if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
@@ -64,17 +65,6 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
     if (!currentTheme) {
       return;
     }
-
-    // const {
-    //   semanticColors
-    // } = currentTheme;
-
-    // if (semanticColors) {
-    //   this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-    //   this.domElement.style.setProperty('--link', semanticColors.link || null);
-    //   this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    // }
-
   }
 
   protected onDispose(): void {
@@ -101,6 +91,12 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
                 }),
                 PropertyPaneTextField('userId', {
                   label: 'User ID'
+                }),
+                PropertyPaneToggle('componentToggler',{
+                  label:'Webpart Type',
+                  offText:'Calender',
+                  onText:'Events',
+                  checked:false
                 })
               ]
             }

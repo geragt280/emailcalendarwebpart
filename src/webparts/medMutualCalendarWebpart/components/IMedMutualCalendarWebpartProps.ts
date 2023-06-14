@@ -4,4 +4,5 @@ export interface IMedMutualCalendarWebpartProps {
   description: string;
   userId: string;
   context: WebPartContext;
+  componentToggler: boolean;
 }

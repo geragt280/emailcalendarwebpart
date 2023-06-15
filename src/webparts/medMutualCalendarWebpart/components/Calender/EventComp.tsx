@@ -7,7 +7,7 @@ import { MSGraphClientV3 } from '../../../../../node_modules/@microsoft/sp-http-
 import { DialogBodyProps } from './DialogBodyProps';
 import Dialog from './Dialog';
 import { DateBox, DateBoxSize } from './DateBox';
-import { FocusZone } from 'office-ui-fabric-react';
+import { FocusZone, Icon } from 'office-ui-fabric-react';
 
 type Props = {
   context: WebPartContext;
@@ -170,9 +170,19 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
         const eventCategory = item.category !== undefined ? item.category : "Default";
         const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
         const backgroundColor = colorCodes[currentPreset.color];
-        return <div>
-          <DateBox  startDate={item.start} endDate={item.end} size={DateBoxSize.Small} key={i} themeVariant={backgroundColor} />
-        </div>
+        const formattedDate = `${item.start.toLocaleDateString()} | ${item.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+        return(
+          <div style={{display:'flex', flex:1, borderBottom: '1px solid #ccc', flexDirection:'row', alignItems:'start' }}>
+            <div style={{padding:5}}>
+              <DateBox  startDate={item.start} endDate={item.end} size={DateBoxSize.Small} key={i} themeVariant={backgroundColor} />
+            </div>
+            <div className='event-info' style={{padding:'5px 0px 0px 0px'}}>
+              <h5 style={{margin:0, color: 'orange'}}>{item.title}</h5>
+              <p style={{margin:0, fontSize:9, marginTop:2}}>{formattedDate}</p>
+            </div>
+          </div>
+
+        ) 
       })}
     </div>
   }
@@ -205,8 +215,16 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
   // }
   console.log("rendering", items);
   return (
-    <div>
-      
+    <div style={{padding:10}}>
+      <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width:'100%', alignItems:'center'}}>
+        <div style={{display:'flex', flexDirection:'row', alignItems:'center', width:'12%', justifyContent:'space-between'}}>
+          <Icon iconName='ZeroDayCalendar' style={{ fontSize: 15, color: 'orange' }} />
+          <h3>Events</h3>
+        </div>
+        <div>
+          <p style={{color:'#005C4B'}}>View All</p>
+        </div>
+      </div>
       <div>
         <FocusZone>
           <RenderEventItems items={items} />

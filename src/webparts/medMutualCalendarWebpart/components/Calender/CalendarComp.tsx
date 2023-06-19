@@ -58,7 +58,7 @@ const colorCodes: { [key: string]: string } = {
   preset22: "#000087",
   preset23: "#290132",
   preset24: "#4B091F",
-  default: "#A8D1DF",
+  default: "#0d553f",
 };
 
 // type CalendarItemProps = {
@@ -151,8 +151,12 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
           client
             .api(`${graphColorCategoriesUrl}`)
             .get((err: any, res: { value: ColorCategoryProps[]; }) => {
-              console.log("Color categories", res.value);
-              setColorCategories([...colorCategories, ...res.value]);
+              if (res) {
+                console.log("Color categories", res.value);               
+                setColorCategories([...colorCategories, ...res.value]);
+              }else{
+                console.log("Error fetching categories", err);
+              }
             });
         })
         .catch((err: any) => {
@@ -178,7 +182,7 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
     const eventDescription = e.eventDescription;
     const eventUrl = e.eventUrl;
     const eventCategory = e.category !== undefined ? e.category : "Default";
-    const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
+    const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === eventCategory)[0] : colorCategories[0];
     const backgroundColor = colorCodes[currentPreset.color];
     // console.log('background color', backgroundColor);
     setSelectedEventCategoryColor(backgroundColor);

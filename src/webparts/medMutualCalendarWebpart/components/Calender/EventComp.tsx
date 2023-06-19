@@ -7,7 +7,7 @@ import { MSGraphClientV3 } from '../../../../../node_modules/@microsoft/sp-http-
 import { DialogBodyProps } from './DialogBodyProps';
 import Dialog from './Dialog';
 import { DateBox, DateBoxSize } from './DateBox';
-import { FocusZone, Icon } from 'office-ui-fabric-react';
+import { FocusZone, Icon, Label } from 'office-ui-fabric-react';
 
 type Props = {
   context: WebPartContext;
@@ -57,7 +57,7 @@ const colorCodes: { [key: string]: string } = {
   preset22: "#000087",
   preset23: "#290132",
   preset24: "#4B091F",
-  default: "#A8D1DF",
+  default: "#0d553f",
 };
 
 // type CalendarItemProps = {
@@ -71,7 +71,7 @@ const colorCodes: { [key: string]: string } = {
 
 const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
   const [items, setItems] = React.useState<EventProps[]>([]);
-  const [selectedEventCategoryColor/*, setSelectedEventCategoryColor*/] = React.useState<string|undefined>(undefined);
+  const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string|undefined>(undefined);
   const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[] | undefined>([
     {
       color: "default",
@@ -79,15 +79,11 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
       id: "34e3cb90-1b09-414e-be75-7525728cf2d5"
     }
   ]);
-  const [selectedItem /*, setSelectedItem*/] = React.useState<DialogBodyProps | undefined>(undefined);
+  const [selectedItem , setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
   const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
   const graphCalenderBaseUrl = `/users/${userId}/calendars`;
-  const [isModalOpen, { /*setTrue: showModal,*/ setFalse: hideModal }] = useBoolean(false);
+  const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
   // const titleId = useId('title');
-
-  // const _getEstDate = (date: string, allDay: boolean): string => {
-  //   return allDay ? date.substr(0, date.length - 1) : date;
-  // }
 
   const _getListData = (): Promise<EventProps[] | void> => {
 
@@ -150,8 +146,12 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
           client
             .api(`${graphColorCategoriesUrl}`)
             .get((err: any, res: { value: ColorCategoryProps[]; }) => {
-              console.log("Color categories", res.value);
-              setColorCategories([...colorCategories, ...res.value]);
+              if (res) {
+                console.log("Color categories", res.value);               
+                setColorCategories([...colorCategories, ...res.value]);
+              }else{
+                console.log("Error fetching categories", err);
+              }
             });
         })
         .catch((err: any) => {
@@ -167,62 +167,67 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
 
     return <div>
       {items.map((item, i) => {
+        // if (i === 11) {
+        //   return;
+        // }
         const eventCategory = item.category !== undefined ? item.category : "Default";
-        const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
+        const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === eventCategory)[0] : colorCategories[0];
         const backgroundColor = colorCodes[currentPreset.color];
         const formattedDate = `${item.start.toLocaleDateString()} | ${item.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
         return(
-          <div style={{display:'flex', flex:1, borderBottom: '1px solid #ccc', flexDirection:'row', alignItems:'start' }}>
+          <div style={{display:'flex', flex:1, borderBottom: '1px solid #ccc', flexDirection:'row', alignItems:'start' }} onClick={() => onItemSelect(item)}>
             <div style={{padding:5}}>
               <DateBox  startDate={item.start} endDate={item.end} size={DateBoxSize.Small} key={i} themeVariant={backgroundColor} />
             </div>
             <div className='event-info' style={{padding:'5px 0px 0px 0px'}}>
-              <h5 style={{margin:0, color: 'orange'}}>{item.title}</h5>
-              <p style={{margin:0, fontSize:9, marginTop:2}}>{formattedDate}</p>
+              {/* fontweight 500  */}
+              <p style={{margin:0, color: '#F06F13', fontSize: 15, fontWeight: 500}}>{item.title}</p>
+              <p style={{margin:0, fontSize:12, marginTop:2}}>{item.category}</p>
+              <p style={{margin:0, fontSize:12, marginTop:2}}>{formattedDate}</p>
             </div>
           </div>
-
         ) 
       })}
     </div>
   }
 
-  // const onItemSelect = (e: EventProps): void => {
-  //   // console.log("item selected", e);
-  //   // const timeString = e.start.toTimeString();
-  //   const friendlyTime = e.start.toLocaleTimeString([],
-  //     {
-  //       hour: '2-digit', minute: '2-digit'
-  //     }
-  //   );
-  //   const eventSubject = e.title;
-  //   const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
-  //   const eventDescription = e.eventDescription;
-  //   const eventUrl = e.eventUrl;
-  //   const eventCategory = e.category !== undefined ? e.category : "Default";
-  //   const currentPreset = colorCategories.filter(item => item.displayName === eventCategory)[0];
-  //   const backgroundColor = colorCodes[currentPreset.color];
-  //   // console.log('background color', backgroundColor);
-  //   setSelectedEventCategoryColor(backgroundColor);
-  //   setSelectedItem({
-  //     eventSubject,
-  //     eventDate,
-  //     eventDescription,
-  //     eventUrl,
-  //     eventCategory
-  //   });
-  //   showModal();
-  // }
-  console.log("rendering", items);
+  const onItemSelect = (e: EventProps): void => {
+    // console.log("item selected", e);
+    // const timeString = e.start.toTimeString();
+    const friendlyTime = e.start.toLocaleTimeString([],
+      {
+        hour: '2-digit', minute: '2-digit'
+      }
+    );
+    const eventSubject = e.title;
+    const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
+    const eventDescription = e.eventDescription;
+    const eventUrl = e.eventUrl;
+    const eventCategory = e.category !== undefined ? e.category : "Default";
+    const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === eventCategory)[0] : colorCategories[0];
+    const backgroundColor = colorCodes[currentPreset.color];
+    // console.log('background color', backgroundColor);
+    setSelectedEventCategoryColor(backgroundColor);
+    setSelectedItem({
+      eventSubject,
+      eventDate,
+      eventDescription,
+      eventUrl,
+      eventCategory
+    });
+    showModal();
+  }
+
   return (
     <div style={{padding:10}}>
       <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width:'100%', alignItems:'center'}}>
-        <div style={{display:'flex', flexDirection:'row', alignItems:'center', width:'12%', justifyContent:'space-between'}}>
+        <div style={{display:'flex', flexDirection:'row', alignItems:'center', width:90, justifyContent:'space-evenly'}}>
           <Icon iconName='ZeroDayCalendar' style={{ fontSize: 15, color: 'orange' }} />
           <h3>Events</h3>
         </div>
         <div>
-          <p style={{color:'#005C4B'}}>View All</p>
+          {/* set the link to ~sitepage/events.aspx */}
+          <Label style={{color:'#026D70'}} onClick={() => window.open(context.pageContext.web.absoluteUrl+'/SitePages/Events.aspx')}>View All</Label>
         </div>
       </div>
       <div>

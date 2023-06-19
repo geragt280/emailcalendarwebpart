@@ -48,7 +48,11 @@ export const DateBox = (props: IDateBoxProps) => {
 
   } else {
     return (
+      // month font 14 
+
+      // date font 30
       <div
+
         className={css(styles.box,
           styles.boxIsSingleDay,
           (props.size === DateBoxSize.Small ? styles.boxIsSmall : styles.boxIsMedium), props.className)}

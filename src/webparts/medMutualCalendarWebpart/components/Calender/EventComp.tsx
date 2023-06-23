@@ -21,7 +21,6 @@ type ColorCategoryProps = {
 }
 
 type EventProps = {
-  allDay: string;
   category: string;
   end: Date;
   eventUrl: string;
@@ -29,6 +28,9 @@ type EventProps = {
   start: Date;
   title: string;
   eventDescription: string;
+  timeZone: string;
+  isAllDay: boolean;
+  priority: string;
 }
 
 const colorCodes: { [key: string]: string } = {
@@ -122,7 +124,10 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
               allDay: i.isAllDay,
               category: i.categories.length > 0 ? i.categories[0] : undefined,
               eventUrl: i.webLink,
-              eventDescription: i.bodyPreview
+              eventDescription: i.bodyPreview,
+              isAllDay: i.isAllDay,
+              priority: i.sensitivity,
+              timeZone: i.start.timeZone 
             }));
             console.log('****RESPONSE222', pickedItems)
             setItems(pickedItems);
@@ -194,26 +199,40 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
   const onItemSelect = (e: EventProps): void => {
     // console.log("item selected", e);
     // const timeString = e.start.toTimeString();
-    const friendlyTime = e.start.toLocaleTimeString([],
+    const friendlyStartTime = e.start.toLocaleTimeString([],
+      {
+        hour: '2-digit', minute: '2-digit'
+      }
+    );
+    const friendlyEndTime = e.end.toLocaleTimeString([],
       {
         hour: '2-digit', minute: '2-digit'
       }
     );
     const eventSubject = e.title;
-    const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
+    const eventStartDate = e.start.toDateString() + ' / ' + friendlyStartTime;
+    const eventEndDate = e.end.toDateString() + ' / ' + friendlyEndTime;
     const eventDescription = e.eventDescription;
     const eventUrl = e.eventUrl;
     const eventCategory = e.category !== undefined ? e.category : "Default";
     const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === eventCategory)[0] : colorCategories[0];
     const backgroundColor = colorCodes[currentPreset.color];
+    const eventIsAllDay = e.isAllDay;
+    const eventPriority = e.priority;
+    const evnetTimeZone = e.timeZone;
+
     // console.log('background color', backgroundColor);
     setSelectedEventCategoryColor(backgroundColor);
     setSelectedItem({
       eventSubject,
-      eventDate,
+      eventStartDate,
+      eventIsAllDay,
       eventDescription,
       eventUrl,
-      eventCategory
+      eventCategory,
+      eventEndDate,
+      eventPriority,
+      evnetTimeZone
     });
     showModal();
   }

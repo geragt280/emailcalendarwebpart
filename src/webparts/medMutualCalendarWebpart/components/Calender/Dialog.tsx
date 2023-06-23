@@ -33,7 +33,13 @@ type DialogProps = {
 
 
 const Dialog: React.FunctionComponent<DialogProps> = ({ hideModal, selectedItem, categoryColor }) => {
+    const [moreDetails, setMoreDetails] = React.useState<boolean>(false);
     const titleId = useId('title');
+
+    const viewMoreDetails = () => {
+        setMoreDetails(true);
+
+    }
     return (
         <div>
 
@@ -66,7 +72,7 @@ const Dialog: React.FunctionComponent<DialogProps> = ({ hideModal, selectedItem,
                         </div>
                         <div style={{ width: 450, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                             <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}><Icon iconName='Clock' style={{ fontSize: 20, color: categoryColor }} /></div>
-                            <div style={{ width: '100%', height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.eventDate}</p></div>
+                            <div style={{ width: '100%', height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.eventStartDate}</p></div>
                         </div>
                         <div style={{ width: 450, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                             <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', }}><Icon iconName='KnowledgeArticle' style={{ fontSize: 20, color: categoryColor }} /></div>
@@ -76,9 +82,24 @@ const Dialog: React.FunctionComponent<DialogProps> = ({ hideModal, selectedItem,
                             <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', }}><Icon iconName='Tag' style={{ fontSize: 20, color: categoryColor }} /></div>
                             <div style={{ width: 440, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.eventCategory}</p></div>
                         </div>
-                        <div style={{ width: 450, alignItems: 'center', padding: 10, display: 'flex', flexDirection: 'column' }}>
-                            <PrimaryButton text="More Details" onClick={() => window.open(selectedItem.eventUrl, "_blank")} allowDisabledFocus checked={true} />
-                        </div>
+                        { !moreDetails ? 
+                            <div style={{ width: 450, alignItems: 'center', padding: 10, display: 'flex', flexDirection: 'column' }}>
+                                <PrimaryButton text="More Details" onClick={viewMoreDetails} allowDisabledFocus checked={true} />
+                            </div> : <>
+                                <div style={{ width: 450, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', }}><Icon iconName='Tag' style={{ fontSize: 20, color: categoryColor }} /></div>
+                                    <div style={{ width: 440, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.eventIsAllDay}</p></div>
+                                </div>
+                                <div style={{ width: 450, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', }}><Icon iconName='Tag' style={{ fontSize: 20, color: categoryColor }} /></div>
+                                    <div style={{ width: 440, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.eventPriority}</p></div>
+                                </div>
+                                <div style={{ width: 450, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <div style={{ width: 60, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', }}><Icon iconName='Tag' style={{ fontSize: 20, color: categoryColor }} /></div>
+                                    <div style={{ width: 440, height: 40, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingRight: 5, paddingLeft: 15, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}><p>{selectedItem.evnetTimeZone}</p></div>
+                                </div>
+                            </>
+                        }
                     </div>
                 </div>
             </Modal>

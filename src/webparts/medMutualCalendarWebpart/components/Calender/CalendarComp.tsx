@@ -1,12 +1,17 @@
 import * as React from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import * as moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css'
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { useBoolean } from '@fluentui/react-hooks';
-import { MSGraphClientV3 } from '../../../../../node_modules/@microsoft/sp-http-msgraph/dist/index-internal'
+import { MSGraphClientV3 } from '@microsoft/sp-http';
 import { DialogBodyProps } from './DialogBodyProps';
 import Dialog from './Dialog';
+import { ClientSecretCredential } from '@azure/identity';
+import { Client } from '@microsoft/microsoft-graph-client';
+import settings, { AppSettings } from '../../assets/appSettings';
+import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
+import { PrimaryButton } from '@fluentui/react';
 
 const localizer = momentLocalizer(moment);
 
@@ -19,10 +24,9 @@ type ColorCategoryProps = {
   id: string;
   displayName: string;
   color: string;
-}
+};
 
 type EventProps = {
-  allDay: string;
   category: string;
   end: Date;
   eventUrl: string;
@@ -30,7 +34,10 @@ type EventProps = {
   start: Date;
   title: string;
   eventDescription: string;
-}
+  timeZone: string;
+  isAllDay: boolean;
+  priority: string;
+};
 
 const colorCodes: { [key: string]: string } = {
   preset0: "#F1919A",
@@ -70,161 +77,153 @@ const colorCodes: { [key: string]: string } = {
 //   category: string;
 // }
 
+
 const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
-  const [items, setItems] = React.useState([]);
-  const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string|undefined>(undefined);
-  const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[] | undefined>([
+  const [items, setItems] = React.useState<EventProps[]>([]);
+  const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string | undefined>(undefined);
+  const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[]>([
     {
-      color: "default",
-      displayName: "Default",
-      id: "34e3cb90-1b09-414e-be75-7525728cf2d5"
-    }
+      color: 'default',
+      displayName: 'Default',
+      id: '34e3cb90-1b09-414e-be75-7525728cf2d5',
+    },
   ]);
   const [selectedItem, setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
   const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
-  const graphCalenderBaseUrl = `/users/${userId}/calendars`;
+  const graphCalendarBaseUrl = `/users/${userId}/calendars`;
   const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
-  // const titleId = useId('title');
+  const [_settings] = React.useState<AppSettings | undefined>(settings);
+  const [_appClient, setAppClient] = React.useState<Client | undefined>(undefined);
 
-  // const _getEstDate = (date: string, allDay: boolean): string => {
-  //   return allDay ? date.substr(0, date.length - 1) : date;
-  // }
+  const onButtonClick = () => {
+    const secretCreds = new ClientSecretCredential(
+      _settings.tenantId,
+      _settings.clientId,
+      _settings.clientSecret
+    );
+    console.log(secretCreds)
+    if (!_appClient) {
+      const authProvider = new TokenCredentialAuthenticationProvider(secretCreds, {
+        scopes: ['https://login.microsoftonline.com'],
+      });
 
-  const _getListData = (): Promise<EventProps[] | void> => {
+      setAppClient(Client.initWithMiddleware({
+        authProvider: authProvider,
+      }));
+    }
+  };
 
-    const url = graphCalenderBaseUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
+  const getListData = async (): Promise<void> => {
+    const url = graphCalendarBaseUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
 
     if (!url) {
-      return Promise.resolve([]);
+      return;
     }
 
     const dayStart = moment().startOf('day').add(1, 'minutes').toDate().toISOString();
     const dayEnd = moment().add(1, 'y').endOf('day').toDate().toISOString();
-    console.log('******url', url + `/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`);
 
-    context.msGraphClientFactory
-      .getClient("3")
-      .then((client: MSGraphClientV3): void => {
-        client
-          .api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
-          .headers({
-            'Prefer': 'outlook.timezone="Eastern Standard Time"',
-            // Add more headers as needed
-          })
-          .get((err: any, res: { value: any[]; }) => {
-            console.log('****RESPONSE', res)
-            if (err) {
-              console.error('something bad happened');
-              console.error(err);
-              return;
-            }
+    try {
+      const client: MSGraphClientV3 = await context.msGraphClientFactory.getClient('3');
+      const res = await client.api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
+        .header('Prefer', 'outlook.timezone="Eastern Standard Time"')
+        .get();
 
-            const pickedItems: EventProps[] = res.value.map(i => ({
-              id: i.id,
-              title: i.subject,
-              start: new Date(i.start.dateTime),
-              end: new Date(i.end.dateTime),
-              allDay: i.isAllDay,
-              category: i.categories.length > 0 ? i.categories[0] : undefined,
-              eventUrl: i.webLink,
-              eventDescription: i.bodyPreview
-            }));
-            console.log('****RESPONSE222', pickedItems)
-            setItems(pickedItems);
-            return pickedItems;
-          });
-
-      })
-      .catch((err: any) => {
-        console.log('nope', err);
-      });
-  }
+      const pickedItems: EventProps[] = res.value.map((i: any) => ({
+        id: i.id,
+        title: i.subject,
+        start: new Date(i.start.dateTime),
+        end: new Date(i.end.dateTime),
+        category: i.categories.length > 0 ? i.categories[0] : undefined,
+        eventUrl: i.webLink,
+        eventDescription: i.bodyPreview,
+        isAllDay: i.isAllDay,
+        priority: i.sensitivity,
+        timeZone: i.start.timeZone,
+      }));
+      setItems(pickedItems);
+    } catch (err) {
+      console.error('Something bad happened:', err);
+    }
+  };
 
   React.useEffect(() => {
-    const getListDataPromise = async (): Promise<void> => {
-      await _getListData();
-    };
     const getColorCategories = (): void => {
-      context.msGraphClientFactory
-        .getClient("3")
+      console.log('Color category URL', graphColorCategoriesUrl);
+      context.msGraphClientFactory.getClient('3')
         .then((client: MSGraphClientV3): void => {
           client
             .api(`${graphColorCategoriesUrl}`)
-            .get((err: any, res: { value: ColorCategoryProps[]; }) => {
+            .get((err: any, res: { value: ColorCategoryProps[] }) => {
               if (res) {
-                console.log("Color categories", res.value);               
+                console.log('Color categories', res.value);
                 setColorCategories([...colorCategories, ...res.value]);
-              }else{
-                console.log("Error fetching categories", err);
+              } else {
+                console.log('Error fetching categories', err);
               }
             });
         })
         .catch((err: any) => {
-          console.log('error gletting color category', err);
+          console.log('Error getting color categories', err);
         });
-    }
-    void getColorCategories();
-    void getListDataPromise();
-    console.log("Comp started");
+    };
+
+    getColorCategories();
+    getListData();
+    console.log('Component started');
   }, []);
 
-
   const onItemSelect = (e: EventProps): void => {
-    // console.log("item selected", e);
-    // const timeString = e.start.toTimeString();
-    const friendlyTime = e.start.toLocaleTimeString([],
-      {
-        hour: '2-digit', minute: '2-digit'
-      }
-    );
+    const friendlyTime = e.start.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const friendlyEndTime = e.end.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     const eventSubject = e.title;
-    const eventDate = e.start.toDateString() + ' / ' + friendlyTime;
+    const eventStartDate = e.start.toDateString() + ' / ' + friendlyTime;
+    const eventEndDate = e.end.toDateString() + ' / ' + friendlyEndTime;
     const eventDescription = e.eventDescription;
     const eventUrl = e.eventUrl;
-    const eventCategory = e.category !== undefined ? e.category : "Default";
+    const eventCategory = e.category !== undefined ? e.category : 'Default';
     const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === eventCategory)[0] : colorCategories[0];
     const backgroundColor = colorCodes[currentPreset.color];
-    // console.log('background color', backgroundColor);
+    const eventIsAllDay = e.isAllDay;
+    const eventPriority = e.priority;
+    const evnetTimeZone = e.timeZone;
+
     setSelectedEventCategoryColor(backgroundColor);
     setSelectedItem({
       eventSubject,
-      eventDate,
+      eventStartDate,
       eventDescription,
       eventUrl,
-      eventCategory
+      eventCategory,
+      eventEndDate,
+      eventIsAllDay,
+      eventPriority,
+      evnetTimeZone,
     });
     showModal();
-  }
-
+  };
 
   const eventStyleGetter = (event: any, start: any, end: any, isSelected: any) => {
-    const category = event.category !== undefined ? event.category : "Default";
-    const currentPreset = colorCategories.length > 1 ? colorCategories.filter(e => e.displayName === category)[0] : colorCategories[0];
+    const category = event.category !== undefined ? event.category : 'Default';
+    const currentPreset = colorCategories.length > 1 ? colorCategories.filter((e) => e.displayName === category)[0] : colorCategories[0];
     const backgroundColor = colorCodes[currentPreset.color];
     const style = {
       backgroundColor,
       borderRadius: '5px',
       color: 'white',
       border: 'none',
-      display: 'flex'
+      display: 'flex',
     };
     return {
       style,
     };
   };
-
-  // const myEventComponent: React.ComponentType<EP<EventProps>> = (props) => {
-  //   // Destructure the event prop
-  //   const { event } = props;
-  
-  //   // Your component logic goes here
-  //   return (
-  //     <div style={{ height: 20 }}>
-  //       {/* Rearrange the text here */}
-  //       {event.title}
-  //     </div>
-  //   );
-  // };
 
   return (
     <div>
@@ -234,21 +233,16 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
         startAccessor="start"
         endAccessor="end"
         eventPropGetter={eventStyleGetter}
-        // components={{
-        //   week: { 
-        //     event: myEventComponent
-        //   }
-        // }}
         onSelectEvent={onItemSelect}
         style={{ height: 500 }}
       />
-
-      {isModalOpen &&
+      <PrimaryButton onClick={onButtonClick}>Help</PrimaryButton>
+      {isModalOpen && (
         <Dialog hideModal={hideModal} selectedItem={selectedItem} categoryColor={selectedEventCategoryColor} />
-      }
-      
+      )}
     </div>
-  )
-}
+  );
+};
+
 export default CalendarComp;
 

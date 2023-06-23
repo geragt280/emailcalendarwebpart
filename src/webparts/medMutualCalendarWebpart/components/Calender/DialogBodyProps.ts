@@ -2,6 +2,10 @@ export type DialogBodyProps = {
   eventSubject: string;
   eventDescription: string;
   eventUrl: string;
-  eventDate: string;
+  eventStartDate: string;
+  eventEndDate: string;
   eventCategory: string;
+  eventPriority: string;
+  eventIsAllDay: boolean;
+  evnetTimeZone: string;
 }

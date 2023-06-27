@@ -9,9 +9,10 @@ import Dialog from './Dialog';
 import { DateBox, DateBoxSize } from './DateBox';
 import { FocusZone, Icon, Label } from 'office-ui-fabric-react';
 
-type Props = {
+type EventCompProps = {
   context: WebPartContext;
   userId: string;
+  textFileUrl: string;
 };
 
 type ColorCategoryProps = {
@@ -34,7 +35,7 @@ type EventProps = {
 }
 
 const colorCodes: { [key: string]: string } = {
-  preset0: "#F1919A",
+  preset0: "#E74856",
   preset1: "#FFBA66",
   preset2: "#914900",
   preset3: "#A7A24C",
@@ -71,7 +72,7 @@ const colorCodes: { [key: string]: string } = {
 //   category: string;
 // }
 
-const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
+const EventComp: React.FunctionComponent<EventCompProps> = ({ context, userId, textFileUrl }) => {
   const [items, setItems] = React.useState<EventProps[]>([]);
   const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string|undefined>(undefined);
   const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[] | undefined>([
@@ -82,7 +83,7 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
     }
   ]);
   const [selectedItem , setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
-  const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
+  const graphColorCategoriesUrl = textFileUrl;
   const graphCalenderBaseUrl = `/users/${userId}/calendars`;
   const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
   // const titleId = useId('title');
@@ -103,13 +104,13 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
       .getClient("3")
       .then((client: MSGraphClientV3): void => {
         client
-          .api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
+          .api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime&$top=30`)
           .headers({
             'Prefer': 'outlook.timezone="Eastern Standard Time"',
             // Add more headers as needed
           })
           .get((err: any, res: { value: any[]; }) => {
-            console.log('****RESPONSE', res)
+            console.log('****RESPONSE EventComp', res)
             if (err) {
               console.error('something bad happened');
               console.error(err);
@@ -141,31 +142,25 @@ const EventComp: React.FunctionComponent<Props> = ({ context, userId }) => {
   }
 
   React.useEffect(() => {
-    const getListDataPromise = async (): Promise<void> => {
-      await _getListData();
-    };
     const getColorCategories = (): void => {
-      context.msGraphClientFactory
-        .getClient("3")
-        .then((client: MSGraphClientV3): void => {
-          client
-            .api(`${graphColorCategoriesUrl}`)
-            .get((err: any, res: { value: ColorCategoryProps[]; }) => {
-              if (res) {
-                console.log("Color categories", res.value);               
-                setColorCategories([...colorCategories, ...res.value]);
-              }else{
-                console.log("Error fetching categories", err);
-              }
-            });
-        })
-        .catch((err: any) => {
-          console.log('error gletting color category', err);
-        });
-    }
-    void getColorCategories();
-    void getListDataPromise();
-    console.log("Comp started", items);
+      fetch(graphColorCategoriesUrl)
+      .then(response => response.text())
+      .then(textData => {
+        // Parse the text data as needed
+        const serializedData = JSON.parse(textData);
+        // Use the serialized data in your JavaScript code
+        setColorCategories([...colorCategories, ...serializedData.value]);
+        console.log("serializedData", serializedData);
+      })
+      .catch(error => {
+        // Handle error
+        console.error('Failed to read the category file:', error, "FileUrl", graphColorCategoriesUrl);
+      });
+    };
+
+    getColorCategories();
+    _getListData();
+    console.log('Component started');
   }, []);
 
   const RenderEventItems: React.FunctionComponent<{ items: EventProps[] | undefined; }> = ({items}) =>{

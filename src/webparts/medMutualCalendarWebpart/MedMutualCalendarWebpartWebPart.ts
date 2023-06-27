@@ -17,6 +17,7 @@ export interface IMedMutualCalendarWebpartWebPartProps {
   description: string;
   userId: string;
   componentToggler: boolean;
+  textFileUrl: string;
 }
 
 export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPart<IMedMutualCalendarWebpartWebPartProps> {
@@ -28,7 +29,8 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
         description: this.properties.description,
         userId: this.properties.userId,
         context: this.context,
-        componentToggler: this.properties.componentToggler
+        componentToggler: this.properties.componentToggler,
+        textFileUrl: this.properties.textFileUrl
       }
     );
 
@@ -91,6 +93,9 @@ export default class MedMutualCalendarWebpartWebPart extends BaseClientSideWebPa
                 }),
                 PropertyPaneTextField('userId', {
                   label: 'User ID'
+                }),
+                PropertyPaneTextField('textFileUrl', {
+                  label: 'Categories File Url'
                 }),
                 PropertyPaneToggle('componentToggler',{
                   label:'Webpart Type',

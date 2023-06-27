@@ -7,17 +7,13 @@ import { useBoolean } from '@fluentui/react-hooks';
 import { MSGraphClientV3 } from '@microsoft/sp-http';
 import { DialogBodyProps } from './DialogBodyProps';
 import Dialog from './Dialog';
-import { ClientSecretCredential } from '@azure/identity';
-import { Client } from '@microsoft/microsoft-graph-client';
-import settings, { AppSettings } from '../../assets/appSettings';
-import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { PrimaryButton } from '@fluentui/react';
 
 const localizer = momentLocalizer(moment);
 
-type Props = {
+type CalendarCompProps = {
   context: WebPartContext;
   userId: string;
+  textFileUrl: string;
 };
 
 type ColorCategoryProps = {
@@ -40,7 +36,7 @@ type EventProps = {
 };
 
 const colorCodes: { [key: string]: string } = {
-  preset0: "#F1919A",
+  preset0: "#E74856",
   preset1: "#FFBA66",
   preset2: "#914900",
   preset3: "#A7A24C",
@@ -78,7 +74,7 @@ const colorCodes: { [key: string]: string } = {
 // }
 
 
-const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
+const CalendarComp: React.FunctionComponent<CalendarCompProps> = ({ context, userId, textFileUrl }) => {
   const [items, setItems] = React.useState<EventProps[]>([]);
   const [selectedEventCategoryColor, setSelectedEventCategoryColor] = React.useState<string | undefined>(undefined);
   const [colorCategories, setColorCategories] = React.useState<ColorCategoryProps[]>([
@@ -89,29 +85,9 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
     },
   ]);
   const [selectedItem, setSelectedItem] = React.useState<DialogBodyProps | undefined>(undefined);
-  const graphColorCategoriesUrl = `/users/${userId}/outlook/masterCategories`;
+  const graphColorCategoriesUrl = textFileUrl;
   const graphCalendarBaseUrl = `/users/${userId}/calendars`;
   const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
-  const [_settings] = React.useState<AppSettings | undefined>(settings);
-  const [_appClient, setAppClient] = React.useState<Client | undefined>(undefined);
-
-  const onButtonClick = () => {
-    const secretCreds = new ClientSecretCredential(
-      _settings.tenantId,
-      _settings.clientId,
-      _settings.clientSecret
-    );
-    console.log(secretCreds)
-    if (!_appClient) {
-      const authProvider = new TokenCredentialAuthenticationProvider(secretCreds, {
-        scopes: ['https://login.microsoftonline.com'],
-      });
-
-      setAppClient(Client.initWithMiddleware({
-        authProvider: authProvider,
-      }));
-    }
-  };
 
   const getListData = async (): Promise<void> => {
     const url = graphCalendarBaseUrl || '/groups/526d3255-aeb3-4b56-89eb-371c97d13cdb';
@@ -125,7 +101,7 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
 
     try {
       const client: MSGraphClientV3 = await context.msGraphClientFactory.getClient('3');
-      const res = await client.api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime`)
+      const res = await client.api(`${url}/calendar/calendarView?startDateTime=${dayStart}&endDateTime=${dayEnd}&$orderby=start/dateTime&$top=30`)
         .header('Prefer', 'outlook.timezone="Eastern Standard Time"')
         .get();
 
@@ -141,6 +117,7 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
         priority: i.sensitivity,
         timeZone: i.start.timeZone,
       }));
+      console.log("'****RESPONSE CalenderComp", pickedItems);
       setItems(pickedItems);
     } catch (err) {
       console.error('Something bad happened:', err);
@@ -149,23 +126,19 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
 
   React.useEffect(() => {
     const getColorCategories = (): void => {
-      console.log('Color category URL', graphColorCategoriesUrl);
-      context.msGraphClientFactory.getClient('3')
-        .then((client: MSGraphClientV3): void => {
-          client
-            .api(`${graphColorCategoriesUrl}`)
-            .get((err: any, res: { value: ColorCategoryProps[] }) => {
-              if (res) {
-                console.log('Color categories', res.value);
-                setColorCategories([...colorCategories, ...res.value]);
-              } else {
-                console.log('Error fetching categories', err);
-              }
-            });
-        })
-        .catch((err: any) => {
-          console.log('Error getting color categories', err);
-        });
+      fetch(graphColorCategoriesUrl)
+      .then(response => response.text())
+      .then(textData => {
+        // Parse the text data as needed
+        const serializedData = JSON.parse(textData);
+        // Use the serialized data in your JavaScript code
+        setColorCategories([...colorCategories, ...serializedData.value]);
+        console.log("serializedData", serializedData);
+      })
+      .catch(error => {
+        // Handle error
+        console.error('Failed to read the category file:', error, "FileUrl", graphColorCategoriesUrl);
+      });
     };
 
     getColorCategories();
@@ -236,10 +209,11 @@ const CalendarComp: React.FunctionComponent<Props> = ({ context, userId }) => {
         onSelectEvent={onItemSelect}
         style={{ height: 500 }}
       />
-      <PrimaryButton onClick={onButtonClick}>Help</PrimaryButton>
+      
       {isModalOpen && (
         <Dialog hideModal={hideModal} selectedItem={selectedItem} categoryColor={selectedEventCategoryColor} />
       )}
+
     </div>
   );
 };

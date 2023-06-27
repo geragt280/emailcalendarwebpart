@@ -12,9 +12,7 @@
     "test": "gulp test"
   },
   "dependencies": {
-    "@azure/identity": "^2.1.0",
     "@fluentui/react": "^7.199.1",
-    "@microsoft/microsoft-graph-client": "^3.0.5",
     "@microsoft/sp-component-base": "1.17.2",
     "@microsoft/sp-core-library": "1.17.2",
     "@microsoft/sp-lodash-subset": "1.17.2",

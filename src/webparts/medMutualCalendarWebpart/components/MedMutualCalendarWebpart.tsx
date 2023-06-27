@@ -17,9 +17,11 @@ export default class MedMutualCalendarWebpart extends React.Component<IMedMutual
           <CalendarComp
             context={this.props.context}
             userId={this.props.userId}
+            textFileUrl={this.props.textFileUrl}
           /> : <EventComp 
             context={this.props.context}
             userId={this.props.userId}
+            textFileUrl={this.props.textFileUrl}
           />       
         }
       </div>
